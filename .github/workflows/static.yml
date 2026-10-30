@@ -1,43 +1,179 @@
-# Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Etiquetas</title>
+    <!-- Importando a biblioteca JsBarcode via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <!-- Importando a biblioteca QRCode.js via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e5e5e1;
+            margin: 10px;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 90vh;
+        }
+        .container {
+            background: #fefefed0;
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0px 10px 30px rgba(52, 49, 39, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        .titulo {
+            font-size: 35px; 
+            margin: 15px 0;
+            color: #000000;
+            font-weight: bold;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #000000;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 3px solid #8e9293;
+            font-size: 18px;
+            border-radius: 20px;
+            text-align: center;
+            outline: none;
+        }
+        input[type="text"]:focus {
+            border-color: #388ae2;
+        }
+        .code-box {
+            margin-top: 15px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #388ae2;
+            color: white;
+            border: none;
+            font-size: 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #125aa7;
+        }
 
-on:
-  # Runs on pushes targeting the default branch
-  push:
-    branches: ["main"]
+        @media print {
+            @page {
+                margin: 0;
+            }
+            body {
+                background: none;
+                padding: 0px;
+                display: block;
+                height: auto;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0px;
+            }
+            button, .input-group {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+    <div class="container">
+        <div class="titulo">Mercado Livre</div>
+        
+        <div class="input-group">
+            <label for="inputId">Digite o ID:</label>
+            <input type="text" id="inputId" placeholder="Ex: 123456789" oninput="gerarCodigos()" autofocus>
+        </div>
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+        <div class="code-box">
+            <div id="qrcode"></div>
+        </div>
+        
+        <div class="titulo">SGO3</div>
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+        <div class="code-box">
+            <svg id="barcode"></svg>
+        </div>
 
-jobs:
-  # Single deploy job since we're just deploying
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          # Upload entire repository
-          path: '.'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
+        <button onclick="imprimirEtiqueta()">Imprimir</button>
+    </div>
+
+    <script>
+        let qrCodeInstance = null;
+
+        function gerarCodigos() {
+            const valorInput = document.getElementById('inputId').value.trim();
+            const qrContainer = document.getElementById('qrcode');
+            const svgElement = document.getElementById('barcode');
+
+            // Limpa o código de barras
+            svgElement.innerHTML = "";
+
+            if (valorInput === "") {
+                document.title = "Gerador de Etiquetas";
+                qrContainer.innerHTML = "";
+                qrCodeInstance = null;
+                return;
+            }
+
+            document.title = valorInput;
+
+            // 1. Gera ou atualiza o QR Code 
+            if (!qrCodeInstance) {
+                qrCodeInstance = new QRCode(qrContainer, {
+                    text: valorInput,
+                    width: 140,
+                    height: 140,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+            } else {
+                qrCodeInstance.makeCode(valorInput);
+            }
+
+            // 2. Gera o Código de Barras (CODE128)
+            try {
+                JsBarcode("#barcode", valorInput, {
+                    format: "CODE128",
+                    lineColor: "#000",
+                    width: 2,
+                    height: 60,
+                    displayValue: true,
+                    fontSize: 22,
+                    textMargin: 5
+                });
+            } catch (e) {
+                console.error("Erro ao gerar código de barras:", e);
+            }
+        }
+
+        function imprimirEtiqueta() {
+            window.print();
+        }
+    </script>
+</body>
+</html>
